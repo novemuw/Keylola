@@ -3,28 +3,20 @@ export default function handler(req, res) {
         return res.status(405).json({ success: false, message: 'Method not allowed' });
     }
 
-    let body = req.body;
-    if (typeof body === 'string') {
-        try { body = JSON.parse(body); } catch (e) { body = {}; }
-    }
-
-    const { key, hwid } = body || {};
+    const { key, hwid } = req.body;
     if (!key || !hwid) {
         return res.status(400).json({ success: false, message: 'Thiếu key hoặc HWID!' });
     }
 
-    // Tính Key theo ngày giờ Việt Nam (UTC+7)
+    // Thuật toán kiểm tra Key theo ngày UTC
     const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const vnTime = new Date(utc + (3600000 * 7));
-
-    const day = vnTime.getDate();
-    const month = vnTime.getMonth() + 1;
-    const year = vnTime.getFullYear();
+    const day = now.getUTCDate();
+    const month = now.getUTCMonth() + 1;
+    const year = now.getUTCFullYear();
     const validKey = String((day + 18) * month * year - 2011 * 8);
 
-    if (String(key).trim() === String(validKey)) {
-        // CHỨA TRỌN BỘ SCRIPT MENU MINERSCRAFT EXPLOITER
+    if (key === validKey) {
+        // ĐOẠN CODE MINERSCRAFT EXPLOITER HOÀN CHỈNH BẢO MẬT
         const protectedScript = `
             local g = game
             local P = g:GetService("Players")
@@ -33,21 +25,23 @@ export default function handler(req, res) {
             local ts = g:GetService("TeleportService")
             local cg = g:GetService("CoreGui")
 
-            -- 1. TẢI INVENTORY VIEWER V2
+            -- 1. TẢI VÀ KHỞI TẠO INVENTORY VIEWER V2
             local invViewerGui = nil
-            pcall(function()
+            local success, err = pcall(function()
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/archives/main/inv-viewerV2.lua", true))()
             end)
 
-            local playerGui = lp:WaitForChild("PlayerGui", 5)
-            if playerGui then
-                invViewerGui = playerGui:WaitForChild("invviewer", 5)
-                if invViewerGui then
-                    invViewerGui.Enabled = false 
-                    local uiScale = invViewerGui:FindFirstChild("CustomUIScale") or Instance.new("UIScale")
-                    uiScale.Name = "CustomUIScale"
-                    uiScale.Scale = 1.15 
-                    uiScale.Parent = invViewerGui
+            if success then
+                local playerGui = lp:WaitForChild("PlayerGui", 5)
+                if playerGui then
+                    invViewerGui = playerGui:WaitForChild("invviewer", 5)
+                    if invViewerGui then
+                        invViewerGui.Enabled = false 
+                        local uiScale = invViewerGui:FindFirstChild("CustomUIScale") or Instance.new("UIScale")
+                        uiScale.Name = "CustomUIScale"
+                        uiScale.Scale = 1.15 
+                        uiScale.Parent = invViewerGui
+                    end
                 end
             end
 
@@ -61,6 +55,22 @@ export default function handler(req, res) {
                         textBox.Text = playerName
                         pcall(function() textBox:ReleaseFocus(true) end)
                     end
+                    task.wait(0.1)
+                    local searchButton = nil
+                    for _, btn in ipairs(invViewerGui:GetDescendants()) do
+                        if btn:IsA("TextButton") or btn:IsA("ImageButton") then
+                            local btnName = btn.Name:lower()
+                            if btnName:find("search") or btnName:find("view") or btnName:find("find") then
+                                searchButton = btn
+                                break
+                            end
+                        end
+                    end
+                    if searchButton and getconnections then
+                        for _, conn in ipairs(getconnections(searchButton.MouseButton1Click)) do
+                            conn:Fire()
+                        end
+                    end
                 end)
             end
 
@@ -68,7 +78,7 @@ export default function handler(req, res) {
                 if invViewerGui then invViewerGui.Enabled = false end
             end
 
-            -- 2. CẤU HÌNH EXPLOIT
+            -- 2. CẤU HÌNH & HÀM BỔ TRỢ EXPLOIT
             local selectedInv = nil
             local selectedPlayerName = ""
             local FOOD_LIST = {"Banana", "Apple", "Bread", "Meat", "Pork", "Steak"}
@@ -135,13 +145,13 @@ export default function handler(req, res) {
             targetSection:NewButton("🔄 Cập nhật danh sách Target", "Làm mới danh sách", function()
                 local newList = getValidFoodPlayers()
                 playerDropdown:Refresh(newList)
-                msg("Đã cập nhật danh sách!")
+                msg("Đã cập nhật danh sách thành công!")
             end)
 
             targetSection:NewButton("📋 Copy Inventory", "Mục tiêu phải có đồ ăn & Bạn phải đang đói", function()
                 local hungerVal = lp:FindFirstChild("Hunger") or (lp.Character and lp.Character:FindFirstChild("Hunger"))
-                if hungerVal and hungerVal.Value >= 100 then return msg("Bạn đang no! Cần Hunger < 100") end
-                if not selectedInv or not selectedInv.Parent then return msg("Chưa chọn Target!") end
+                if hungerVal and hungerVal.Value >= 100 then return msg("Bạn đang no! Cần Hunger < 100 để thực hiện") end
+                if not selectedInv or not selectedInv.Parent then return msg("Chưa chọn Target hợp lệ!") end
 
                 local ci = g:GetService("ReplicatedStorage"):WaitForChild("GameRemotes"):WaitForChild("ConsumeItem")
                 for _, v in ipairs(selectedInv:GetChildren()) do
@@ -169,7 +179,7 @@ export default function handler(req, res) {
                 ui:ToggleUI()
             end)
 
-            -- 4. TẠO NÚT BẤM NỔI
+            -- 4. TẠO NÚT BẤM NỔI (FLOATING BUTTON)
             if cg:FindFirstChild("ToggleExploitGui") then cg.ToggleExploitGui:Destroy() end
             local screenGui = Instance.new("ScreenGui")
             screenGui.Name = "ToggleExploitGui"
@@ -195,18 +205,15 @@ export default function handler(req, res) {
             corner.Parent = toggleBtn
 
             toggleBtn.MouseButton1Click:Connect(function() ui:ToggleUI() end)
-            msg("Menu Minerscraft đã nạp thành công!")
+            msg("Menu Minerscraft đã được nạp thành công!")
         `;
 
-        return res.status(200).json({ 
-            success: true, 
+        return res.status(200).json({
+            success: true,
             message: 'Xác thực thành công!',
-            script: protectedScript 
+            script: protectedScript
         });
     } else {
-        return res.status(200).json({ 
-            success: false, 
-            message: 'Key không chính xác hoặc đã hết hạn!' 
-        });
+        return res.status(200).json({ success: false, message: 'Key không chính xác hoặc đã hết hạn!' });
     }
 }

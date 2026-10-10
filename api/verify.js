@@ -1,162 +1,212 @@
-local g = game
-local P = g:GetService("Players")
-local lp = P.LocalPlayer
-local hs = g:GetService("HttpService")
-local cg = g:GetService("CoreGui")
-local RbxAnalyticsService = g:GetService("RbxAnalyticsService")
+export default function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
 
-local API_URL = "https://keylola123.vercel.app/api/verify"
+    let body = req.body;
+    if (typeof body === 'string') {
+        try { body = JSON.parse(body); } catch (e) { body = {}; }
+    }
 
--- Lấy HWID thiết bị
-local userHWID = "UNKNOWN_HWID"
-pcall(function() userHWID = RbxAnalyticsService:GetClientId() end)
+    const { key, hwid } = body || {};
+    if (!key || !hwid) {
+        return res.status(400).json({ success: false, message: 'Thiếu key hoặc HWID!' });
+    }
 
-local http_request_func = (syn and syn.request) or (http and http.request) or request or (fluxus and fluxus.request)
+    // Tính Key theo ngày giờ Việt Nam (UTC+7)
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const vnTime = new Date(utc + (3600000 * 7));
 
-local function verifyKeyWithServer(inputKey)
-    local payload = hs:JSONEncode({ key = inputKey, hwid = userHWID })
-    local responseBody = nil
-    
-    if http_request_func then
-        local response = http_request_func({
-            Url = API_URL,
-            Method = "POST",
-            Headers = { ["Content-Type"] = "application/json" },
-            Body = payload
-        })
-        if response and response.Body then responseBody = response.Body end
-    else
-        local success, response = pcall(function()
-            return hs:PostAsync(API_URL, payload, Enum.HttpContentType.ApplicationJson)
-        end)
-        if success then responseBody = response end
-    end
+    const day = vnTime.getDate();
+    const month = vnTime.getMonth() + 1;
+    const year = vnTime.getFullYear();
+    const validKey = String((day + 18) * month * year - 2011 * 8);
 
-    if responseBody then
-        local decodeSuccess, decodedData = pcall(function() return hs:JSONDecode(responseBody) end)
-        if decodeSuccess and decodedData then
-            return decodedData.success, decodedData.script, decodedData.message
-        end
-    end
-    return false, nil, "Không thể kết nối máy chủ!"
-end
+    if (String(key).trim() === String(validKey)) {
+        // CHỨA TRỌN BỘ SCRIPT MENU MINERSCRAFT EXPLOITER
+        const protectedScript = `
+            local g = game
+            local P = g:GetService("Players")
+            local lp = P.LocalPlayer
+            local hs = g:GetService("HttpService")
+            local ts = g:GetService("TeleportService")
+            local cg = g:GetService("CoreGui")
 
-if cg:FindFirstChild("KeySystemGui") then cg.KeySystemGui:Destroy() end
+            -- 1. TẢI INVENTORY VIEWER V2
+            local invViewerGui = nil
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/archives/main/inv-viewerV2.lua", true))()
+            end)
 
-local keyGui = Instance.new("ScreenGui")
-keyGui.Name = "KeySystemGui"
-keyGui.Parent = cg
+            local playerGui = lp:WaitForChild("PlayerGui", 5)
+            if playerGui then
+                invViewerGui = playerGui:WaitForChild("invviewer", 5)
+                if invViewerGui then
+                    invViewerGui.Enabled = false 
+                    local uiScale = invViewerGui:FindFirstChild("CustomUIScale") or Instance.new("UIScale")
+                    uiScale.Name = "CustomUIScale"
+                    uiScale.Scale = 1.15 
+                    uiScale.Parent = invViewerGui
+                end
+            end
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 215)
-mainFrame.Position = UDim2.new(0.5, -160, 0.5, -107)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = keyGui
+            local function updateInventoryViewerTarget(playerName)
+                if not invViewerGui then return end
+                invViewerGui.Enabled = true
+                task.spawn(function()
+                    task.wait(0.15)
+                    local textBox = invViewerGui:FindFirstChildWhichIsA("TextBox", true)
+                    if textBox then
+                        textBox.Text = playerName
+                        pcall(function() textBox:ReleaseFocus(true) end)
+                    end
+                end)
+            end
 
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 8)
-frameCorner.Parent = mainFrame
+            local function hideInventoryViewer()
+                if invViewerGui then invViewerGui.Enabled = false end
+            end
 
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 40)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Text = "Xác Thực Key - Minerscraft"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.Parent = mainFrame
+            -- 2. CẤU HÌNH EXPLOIT
+            local selectedInv = nil
+            local selectedPlayerName = ""
+            local FOOD_LIST = {"Banana", "Apple", "Bread", "Meat", "Pork", "Steak"}
 
-local keyBox = Instance.new("TextBox")
-keyBox.Size = UDim2.new(0.85, 0, 0, 35)
-keyBox.Position = UDim2.new(0.075, 0, 0, 45)
-keyBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-keyBox.BorderSizePixel = 0
-keyBox.Font = Enum.Font.Gotham
-keyBox.PlaceholderText = "Nhập key vào đây..."
-keyBox.Text = ""
-keyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-keyBox.TextSize = 14
-keyBox.Parent = mainFrame
+            local function msg(t) 
+                g:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = 'Minerscraft Exploiter', 
+                    Text = t,
+                    Duration = 3
+                }) 
+            end
 
-local boxCorner = Instance.new("UICorner")
-boxCorner.CornerRadius = UDim.new(0, 6)
-boxCorner.Parent = keyBox
+            local function isFood(str)
+                for _, food in ipairs(FOOD_LIST) do
+                    if str:find(food, 1, true) then return true end
+                end
+                return false
+            end
 
-local submitBtn = Instance.new("TextButton")
-submitBtn.Size = UDim2.new(0.85, 0, 0, 35)
-submitBtn.Position = UDim2.new(0.075, 0, 0, 88)
-submitBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-submitBtn.BorderSizePixel = 0
-submitBtn.Font = Enum.Font.GothamBold
-submitBtn.Text = "Xác Nhận Key"
-submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-submitBtn.TextSize = 14
-submitBtn.Parent = mainFrame
+            local function playerHasFood(player)
+                if player == lp or not player.Character then return false end
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                if not humanoid or humanoid.Health <= 0 then return false end
+                local inv = player.Character:FindFirstChild("Inventory")
+                if not inv or #inv:GetChildren() == 0 then return false end
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 6)
-btnCorner.Parent = submitBtn
+                for _, v in ipairs(inv:GetChildren()) do
+                    if (v:IsA("ValueObject") or v:FindFirstChild("Value") or type(v.Value) == "string") and isFood(v.Value) then
+                        local s, data = pcall(function() return hs:JSONDecode(v.Value) end)
+                        if s and type(data) == "table" and data.count and data.count > 0 then return true end
+                    end
+                end
+                return false
+            end
 
-local discordBtn = Instance.new("TextButton")
-discordBtn.Size = UDim2.new(0.85, 0, 0, 32)
-discordBtn.Position = UDim2.new(0.075, 0, 0, 130)
-discordBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
-discordBtn.BorderSizePixel = 0
-discordBtn.Font = Enum.Font.GothamBold
-discordBtn.Text = "Join Discord for Key"
-discordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-discordBtn.TextSize = 13
-discordBtn.Parent = mainFrame
+            -- 3. GIAO DIỆN KAVO UI
+            local ui = loadstring(g:HttpGet("https://raw.githubusercontent.com/VeztWare/KavoUi/main/KavoUi.lua"))()
+            local window = ui.CreateLib("Minerscraft Inventory Exploiter", "DarkTheme")
+            local mainTab = window:NewTab("Main")
+            local targetSection = mainTab:NewSection("Target & Copy")
 
-local discordCorner = Instance.new("UICorner")
-discordCorner.CornerRadius = UDim.new(0, 6)
-discordCorner.Parent = discordBtn
+            local function getValidFoodPlayers()
+                local list = {}
+                for _, p in ipairs(P:GetPlayers()) do
+                    if playerHasFood(p) then table.insert(list, p.Name) end
+                end
+                if #list == 0 then table.insert(list, "Không có ai có Food") end
+                return list
+            end
 
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 20)
-statusLabel.Position = UDim2.new(0, 0, 0, 175)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Text = ""
-statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-statusLabel.TextSize = 12
-statusLabel.Parent = mainFrame
+            local playerDropdown = targetSection:NewDropdown("Chọn Target (Chỉ có Food)", "Chỉ hiển thị người chơi có đồ ăn", getValidFoodPlayers(), function(selected)
+                selectedPlayerName = selected
+                local targetPlayer = P:FindFirstChild(selected)
+                if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Inventory") then
+                    selectedInv = targetPlayer.Character.Inventory
+                    msg("Đã chọn Target: " .. selected)
+                    updateInventoryViewerTarget(selected)
+                else
+                    selectedInv = nil
+                    hideInventoryViewer()
+                end
+            end)
 
-discordBtn.MouseButton1Click:Connect(function()
-    local discordLink = "https://discord.gg/MYAVzEtgh"
-    if setclipboard then
-        setclipboard(discordLink)
-        statusLabel.TextColor3 = Color3.fromRGB(80, 255, 255)
-        statusLabel.Text = "Copied Discord link to clipboard!"
-    else
-        statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        statusLabel.Text = "Link: " .. discordLink
-    end
-end)
+            targetSection:NewButton("🔄 Cập nhật danh sách Target", "Làm mới danh sách", function()
+                local newList = getValidFoodPlayers()
+                playerDropdown:Refresh(newList)
+                msg("Đã cập nhật danh sách!")
+            end)
 
-submitBtn.MouseButton1Click:Connect(function()
-    statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    statusLabel.Text = "Đang kiểm tra key..."
-    
-    local isValid, downloadedScript, serverMsg = verifyKeyWithServer(keyBox.Text)
-    
-    if isValid and downloadedScript then
-        statusLabel.TextColor3 = Color3.fromRGB(80, 255, 80)
-        statusLabel.Text = "Thành công! Đang mở menu..."
-        
-        -- XÓA BẢNG KEY
-        keyGui:Destroy()
+            targetSection:NewButton("📋 Copy Inventory", "Mục tiêu phải có đồ ăn & Bạn phải đang đói", function()
+                local hungerVal = lp:FindFirstChild("Hunger") or (lp.Character and lp.Character:FindFirstChild("Hunger"))
+                if hungerVal and hungerVal.Value >= 100 then return msg("Bạn đang no! Cần Hunger < 100") end
+                if not selectedInv or not selectedInv.Parent then return msg("Chưa chọn Target!") end
 
-        -- THỰC THI SCRIPT NHẬN VỀ TỪ VERCEL
-        local func, err = loadstring(downloadedScript)
-        if func then
-            task.spawn(func)
-        else
-            warn("Lỗi biên dịch script:", err)
-        end
-    else
-        statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-        statusLabel.Text = serverMsg or "Key không hợp lệ!"
-    end
-end)
+                local ci = g:GetService("ReplicatedStorage"):WaitForChild("GameRemotes"):WaitForChild("ConsumeItem")
+                for _, v in ipairs(selectedInv:GetChildren()) do
+                    if (v:IsA("ValueObject") or v:FindFirstChild("Value") or type(v.Value) == "string") and isFood(v.Value) then
+                        local s, data = pcall(function() return hs:JSONDecode(v.Value) end)
+                        if s and type(data) == "table" and data.count and data.count > 0 then
+                            local slotNum = tonumber(v.Name:match("%d+"))
+                            if slotNum then
+                                local invokeSuccess, err = pcall(function() ci:InvokeServer(selectedInv, slotNum) end)
+                                if invokeSuccess then
+                                    msg("THÀNH CÔNG! Đang tự động Rejoin...")
+                                    task.wait(1.5)
+                                    ts:TeleportToPlaceInstance(g.PlaceId, g.JobId, lp)
+                                    return
+                                end
+                            end
+                        end
+                    end
+                end
+                msg("Target không còn item hợp lệ!")
+            end)
+
+            local settingsSection = mainTab:NewSection("Cài đặt phím tắt (PC)")
+            settingsSection:NewKeybind("Phím tắt đóng/mở", "Dành cho PC", Enum.KeyCode.RightShift, function()
+                ui:ToggleUI()
+            end)
+
+            -- 4. TẠO NÚT BẤM NỔI
+            if cg:FindFirstChild("ToggleExploitGui") then cg.ToggleExploitGui:Destroy() end
+            local screenGui = Instance.new("ScreenGui")
+            screenGui.Name = "ToggleExploitGui"
+            screenGui.Parent = cg
+
+            local toggleBtn = Instance.new("TextButton")
+            toggleBtn.Name = "ToggleButton"
+            toggleBtn.Parent = screenGui
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            toggleBtn.BorderColor3 = Color3.fromRGB(0, 150, 255)
+            toggleBtn.BorderSizePixel = 2
+            toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+            toggleBtn.Size = UDim2.new(0, 130, 0, 40)
+            toggleBtn.Font = Enum.Font.GothamBold
+            toggleBtn.Text = "Đóng/Mở Menu"
+            toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            toggleBtn.TextSize = 14
+            toggleBtn.Active = true
+            toggleBtn.Draggable = true
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 6)
+            corner.Parent = toggleBtn
+
+            toggleBtn.MouseButton1Click:Connect(function() ui:ToggleUI() end)
+            msg("Menu Minerscraft đã nạp thành công!")
+        `;
+
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Xác thực thành công!',
+            script: protectedScript 
+        });
+    } else {
+        return res.status(200).json({ 
+            success: false, 
+            message: 'Key không chính xác hoặc đã hết hạn!' 
+        });
+    }
+}

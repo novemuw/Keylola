@@ -14,7 +14,7 @@ export default function handler(req, res) {
             return res.status(400).json({ success: false, message: 'Thiếu key hoặc HWID!' });
         }
 
-        // Tính toán Key theo ngày giờ Việt Nam (UTC+7)
+        -- Tính toán Key theo ngày giờ Việt Nam (UTC+7)
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
         const vnTime = new Date(utc + (3600000 * 7));
@@ -50,17 +50,20 @@ export default function handler(req, res) {
                     loadstring(g:HttpGet("https://raw.githubusercontent.com/screengui/archives/main/inv-viewerV2.lua", true))()
                 end)
 
-                local playerGui = lp:WaitForChild("PlayerGui", 5)
-                if playerGui then
-                    invViewerGui = playerGui:WaitForChild("invviewer", 5)
-                    if invViewerGui then
-                        invViewerGui.Enabled = false 
-                        local uiScale = invViewerGui:FindFirstChild("CustomUIScale") or Instance.new("UIScale")
-                        uiScale.Name = "CustomUIScale"
-                        uiScale.Scale = 1.15 
-                        uiScale.Parent = invViewerGui
+                task.spawn(function()
+                    task.wait(1)
+                    local playerGui = lp:WaitForChild("PlayerGui", 5)
+                    if playerGui then
+                        invViewerGui = playerGui:WaitForChild("invviewer", 5)
+                        if invViewerGui then
+                            invViewerGui.Enabled = false 
+                            local uiScale = invViewerGui:FindFirstChild("CustomUIScale") or Instance.new("UIScale")
+                            uiScale.Name = "CustomUIScale"
+                            uiScale.Scale = 1.15 
+                            uiScale.Parent = invViewerGui
+                        end
                     end
-                end
+                end)
 
                 local function updateInventoryViewerTarget(playerName)
                     if not invViewerGui then return end
@@ -116,7 +119,7 @@ export default function handler(req, res) {
                 end
 
                 -- =========================================================
-                -- 2. HÀM NỔI BỔ TRỢ EXPLOIT
+                -- 2. HÀM BỔ TRỢ EXPLOIT
                 -- =========================================================
                 local selectedInv = nil
                 local selectedPlayerName = ""
@@ -159,29 +162,10 @@ export default function handler(req, res) {
                 end
 
                 -- =========================================================
-                -- 3. GIAO DIỆN KAVO UI (TÊN OMEGA HUB - MÀU CAM TRONG SUỐT)
+                -- 3. GIAO DIỆN KAVO UI (OMEGA HUB)
                 -- =========================================================
                 local ui = loadstring(g:HttpGet("https://raw.githubusercontent.com/VeztWare/KavoUi/main/KavoUi.lua"))()
-                
-                -- Tùy chỉnh màu Cam trong suốt (Orange Transparent Theme)
-                local orangeTheme = {
-                    SchemeColor = Color3.fromRGB(255, 140, 0),
-                    Background = Color3.fromRGB(30, 20, 10),
-                    Header = Color3.fromRGB(45, 25, 10),
-                    TextColor = Color3.fromRGB(255, 230, 200),
-                    ElementColor = Color3.fromRGB(50, 30, 15)
-                }
-
-                local window = ui.CreateLib("OMEGA HUB", orangeTheme)
-
-                -- Tùy chỉnh độ trong suốt của UI gốc
-                pcall(function()
-                    for _, v in ipairs(cg:GetDescendants()) do
-                        if v:IsA("Frame") and v.BackgroundColor3 == orangeTheme.Background then
-                            v.BackgroundTransparency = 0.25
-                        end
-                    end
-                end)
+                local window = ui.CreateLib("OMEGA HUB", "Midnight")
 
                 -- 🗡️ HIỆU ỨNG ẢNH ĐỘNG CÂY KIẾM KIM CƯƠNG RUNG RUNG
                 pcall(function()
@@ -195,26 +179,24 @@ export default function handler(req, res) {
 
                     local swordImg = Instance.new("ImageLabel")
                     swordImg.Name = "DiamondSword"
-                    swordImg.Size = UDim2.new(0, 50, 0, 50)
-                    swordImg.Position = UDim2.new(0.5, -25, 0.1, 0)
+                    swordImg.Size = UDim2.new(0, 45, 0, 45)
+                    swordImg.Position = UDim2.new(0, 150, 0, 12)
                     swordImg.BackgroundTransparency = 1
-                    swordImg.Image = "rbxassetid://6034832888" -- Asset Cây kiếm Kim Cương
+                    swordImg.Image = "rbxassetid://6034832888"
                     swordImg.Parent = swordGui
 
-                    -- Tạo vòng lặp rung lắc nhẹ (Shake Effect)
                     task.spawn(function()
-                        local basePos = UDim2.new(0.5, -25, 0.1, 0)
+                        local basePos = UDim2.new(0, 150, 0, 12)
                         while swordGui and swordGui.Parent do
-                            local offsetX = math.random(-3, 3)
-                            local offsetY = math.random(-3, 3)
-                            local rot = math.random(-8, 8)
+                            local offsetX = math.random(-2, 2)
+                            local offsetY = math.random(-2, 2)
+                            local rot = math.random(-5, 5)
                             
-                            TweenService:Create(swordImg, TweenInfo.new(0.08, Enum.EasingStyle.Sine), {
-                                Position = UDim2.new(basePos.X.Scale, basePos.X.Offset + offsetX, basePos.Y.Scale, basePos.Y.Offset + offsetY),
-                                Rotation = rot
-                            }):Play()
-                            
-                            task.wait(0.08)
+                            pcall(function()
+                                swordImg.Position = UDim2.new(basePos.X.Scale, basePos.X.Offset + offsetX, basePos.Y.Scale, basePos.Y.Offset + offsetY)
+                                swordImg.Rotation = rot
+                            end)
+                            task.wait(0.1)
                         end
                     end)
                 end)
@@ -326,8 +308,7 @@ export default function handler(req, res) {
                     local MainFrame = Instance.new("Frame")
                     MainFrame.Size = UDim2.new(0, 220, 0, 115)
                     MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
-                    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 20, 10)
-                    MainFrame.BackgroundTransparency = 0.2
+                    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
                     MainFrame.BorderSizePixel = 0
                     MainFrame.Active = true
                     MainFrame.Draggable = true
@@ -336,11 +317,11 @@ export default function handler(req, res) {
 
                     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
                     local MainStroke = Instance.new("UIStroke", MainFrame)
-                    MainStroke.Color = Color3.fromRGB(255, 140, 0)
+                    MainStroke.Color = Color3.fromRGB(50, 50, 65)
 
                     local TopBar = Instance.new("Frame", MainFrame)
                     TopBar.Size = UDim2.new(1, 0, 0, 30)
-                    TopBar.BackgroundColor3 = Color3.fromRGB(55, 30, 15)
+                    TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
                     TopBar.BorderSizePixel = 0
                     Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
 
@@ -349,7 +330,7 @@ export default function handler(req, res) {
                     Title.Position = UDim2.new(0, 10, 0, 0)
                     Title.BackgroundTransparency = 1
                     Title.Text = "👁️ VIEW SYSTEM"
-                    Title.TextColor3 = Color3.fromRGB(255, 200, 150)
+                    Title.TextColor3 = Color3.fromRGB(220, 220, 255)
                     Title.Font = Enum.Font.SourceSansBold
                     Title.TextSize = 13
                     Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -357,7 +338,7 @@ export default function handler(req, res) {
                     local ToggleBtn = Instance.new("TextButton", TopBar)
                     ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
                     ToggleBtn.Position = UDim2.new(1, -26, 0, 4)
-                    ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 40, 20)
+                    ToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
                     ToggleBtn.Text = "-"
                     ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                     ToggleBtn.Font = Enum.Font.SourceSansBold
@@ -382,7 +363,7 @@ export default function handler(req, res) {
                     local UnviewBtn = Instance.new("TextButton", ContentFrame)
                     UnviewBtn.Size = UDim2.new(0.7, 0, 0, 22)
                     UnviewBtn.Position = UDim2.new(0.15, 0, 0.42, 0)
-                    UnviewBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 40)
+                    UnviewBtn.BackgroundColor3 = Color3.fromRGB(190, 50, 50)
                     UnviewBtn.Text = "HỦY XEM (QUAY VỀ)"
                     UnviewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                     UnviewBtn.Font = Enum.Font.SourceSansBold
@@ -459,7 +440,7 @@ export default function handler(req, res) {
                     MAX_CAGES = 5,
                     REMOTE_COOLDOWN = 0.02,
                     ENABLE_VISUALS = true,
-                    VISUAL_COLOR = Color3.fromRGB(255, 140, 0)
+                    VISUAL_COLOR = Color3.fromRGB(0, 255, 170)
                 }
 
                 local ActiveCages = {} 
@@ -656,8 +637,7 @@ export default function handler(req, res) {
                     local MainFrame = Instance.new("Frame")
                     MainFrame.Size = UDim2.new(0, 155, 0, 82)
                     MainFrame.Position = UDim2.new(0.8, -165, 0.4, 0)
-                    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 18, 8)
-                    MainFrame.BackgroundTransparency = 0.25
+                    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
                     MainFrame.BorderSizePixel = 0
                     MainFrame.Active = true
                     MainFrame.Parent = ScreenGui
@@ -669,7 +649,7 @@ export default function handler(req, res) {
 
                     local Header = Instance.new("Frame", MainFrame)
                     Header.Size = UDim2.new(1, 0, 0, 24)
-                    Header.BackgroundColor3 = Color3.fromRGB(50, 25, 10)
+                    Header.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
                     Header.BorderSizePixel = 0
                     Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
@@ -777,14 +757,14 @@ export default function handler(req, res) {
                 local toggleBtn = Instance.new("TextButton")
                 toggleBtn.Name = "ToggleButton"
                 toggleBtn.Parent = screenGui
-                toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 25, 10)
-                toggleBtn.BorderColor3 = Color3.fromRGB(255, 140, 0)
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                toggleBtn.BorderColor3 = Color3.fromRGB(0, 150, 255)
                 toggleBtn.BorderSizePixel = 2
                 toggleBtn.Position = UDim2.new(0, 10, 0, 10)
                 toggleBtn.Size = UDim2.new(0, 130, 0, 40)
                 toggleBtn.Font = Enum.Font.GothamBold
-                toggleBtn.Text = "OMEGA HUB"
-                toggleBtn.TextColor3 = Color3.fromRGB(255, 220, 180)
+                toggleBtn.Text = "Đóng/Mở Menu"
+                toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 toggleBtn.TextSize = 14
                 toggleBtn.Active = true
                 toggleBtn.Draggable = true

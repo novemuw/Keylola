@@ -22,7 +22,7 @@ export default function handler(req, res) {
   const month = vnTime.getMonth() + 1;
   const year = vnTime.getFullYear();
 
-  const validKey = String((day * 18) * month * year * 2011 * 8);
+  const validKey = String((day + 18) * month * year - 2011 * 8);
 
   if (String(key).trim() !== String(validKey)) {
     return res.status(403).json({ success: false, message: 'Key không hợp lệ!' });

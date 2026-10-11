@@ -1,20 +1,29 @@
 export default function handler(req, res) {
-    try {
-        if (req.method !== 'POST') {
-            return res.status(405).json({ success: false, message: 'Method not allowed' });
-        }
+    // Thêm CORS headers để tránh mọi lỗi chặn kết nối từ Executor
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+
+    try {
         let body = req.body;
         if (typeof body === 'string') {
             try { body = JSON.parse(body); } catch (e) { body = {}; }
         }
 
         const { key, hwid } = body || {};
-        if (!key || !hwid) {
-            return res.status(400).json({ success: false, message: 'Thiếu key hoặc HWID!' });
+        if (!key) {
+            return res.status(400).json({ success: false, message: 'Thiếu key xác thực!' });
         }
 
-        -- Tính toán Key theo ngày giờ Việt Nam (UTC+7)
+        // Tính toán Key theo giờ Việt Nam (UTC+7)
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
         const vnTime = new Date(utc + (3600000 * 7));
@@ -41,11 +50,8 @@ export default function handler(req, res) {
                 local TweenService = g:GetService("TweenService")
                 local ReplicatedStorage = g:GetService("ReplicatedStorage")
 
-                -- =========================================================
                 -- 1. KHỞI TẠO INVENTORY VIEWER V2
-                -- =========================================================
                 local invViewerGui = nil
-
                 pcall(function()
                     loadstring(g:HttpGet("https://raw.githubusercontent.com/screengui/archives/main/inv-viewerV2.lua", true))()
                 end)
@@ -74,8 +80,7 @@ export default function handler(req, res) {
                         local textBox = invViewerGui:FindFirstChildWhichIsA("TextBox", true)
                         if textBox then
                             textBox.Text = playerName
-                            if getgenv and firefocuslost then pcall(function() firefocuslost(textBox, true) end)
-                            else pcall(function() textBox:ReleaseFocus(true) end) end
+                            pcall(function() textBox:ReleaseFocus(true) end)
                         end
 
                         task.wait(0.1)
@@ -88,18 +93,6 @@ export default function handler(req, res) {
                                    btnText:find("search") or btnText:find("view") or btnText:find("find") then
                                     searchButton = btn
                                     break
-                                end
-                            end
-                        end
-
-                        if not searchButton and textBox then
-                            local parentFrame = textBox.Parent
-                            if parentFrame then
-                                for _, child in ipairs(parentFrame:GetChildren()) do
-                                    if (child:IsA("TextButton") or child:IsA("ImageButton")) and child ~= textBox then
-                                        searchButton = child
-                                        break
-                                    end
                                 end
                             end
                         end
@@ -118,9 +111,7 @@ export default function handler(req, res) {
                     if invViewerGui then invViewerGui.Enabled = false end
                 end
 
-                -- =========================================================
                 -- 2. HÀM BỔ TRỢ EXPLOIT
-                -- =========================================================
                 local selectedInv = nil
                 local selectedPlayerName = ""
                 local FOOD_LIST = {"Banana", "Apple", "Bread", "Meat", "Pork", "Steak"}
@@ -161,13 +152,11 @@ export default function handler(req, res) {
                     return false
                 end
 
-                -- =========================================================
                 -- 3. GIAO DIỆN KAVO UI (OMEGA HUB)
-                -- =========================================================
                 local ui = loadstring(g:HttpGet("https://raw.githubusercontent.com/VeztWare/KavoUi/main/KavoUi.lua"))()
                 local window = ui.CreateLib("OMEGA HUB", "Midnight")
 
-                -- 🗡️ HIỆU ỨNG ẢNH ĐỘNG CÂY KIẾM KIM CƯƠNG RUNG RUNG
+                -- Hiệu ứng kiếm kim cương rung động
                 pcall(function()
                     local parentGui = (gethui and gethui()) or cg or lp:WaitForChild("PlayerGui")
                     if parentGui:FindFirstChild("OmegaSwordEffect") then parentGui.OmegaSwordEffect:Destroy() end
@@ -191,7 +180,6 @@ export default function handler(req, res) {
                             local offsetX = math.random(-2, 2)
                             local offsetY = math.random(-2, 2)
                             local rot = math.random(-5, 5)
-                            
                             pcall(function()
                                 swordImg.Position = UDim2.new(basePos.X.Scale, basePos.X.Offset + offsetX, basePos.Y.Scale, basePos.Y.Offset + offsetY)
                                 swordImg.Rotation = rot
@@ -217,7 +205,6 @@ export default function handler(req, res) {
                 local playerDropdown = targetSection:NewDropdown("Chọn Target (Chỉ có Food)", "Chỉ hiển thị người chơi có đồ ăn", getValidFoodPlayers(), function(selected)
                     selectedPlayerName = selected
                     local targetPlayer = P:FindFirstChild(selected)
-                    
                     if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Inventory") then
                         selectedInv = targetPlayer.Character.Inventory
                         msg("Đã chọn Target: " .. selected)
@@ -297,7 +284,6 @@ export default function handler(req, res) {
                 local function startViewSystem()
                     if viewGuiInstance then viewGuiInstance:Destroy() end
                     local targetParent = cg
-                    pcall(function() local a = cg.Name end)
 
                     local ScreenGui = Instance.new("ScreenGui")
                     ScreenGui.Name = "ExploitViewSystem"
@@ -677,7 +663,7 @@ export default function handler(req, res) {
                     local BtnG = Instance.new("TextButton", Container)
                     BtnG.Size = UDim2.new(0, 64, 0, 44)
                     BtnG.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
-                    BtnG.Text = "G\n[ Khóa/Hủy ]"
+                    BtnG.Text = "G\\n[ Khóa/Hủy ]"
                     BtnG.TextColor3 = Color3.fromRGB(255, 255, 255)
                     BtnG.TextSize = 11
                     BtnG.Font = Enum.Font.SourceSansBold
@@ -686,7 +672,7 @@ export default function handler(req, res) {
                     local BtnX = Instance.new("TextButton", Container)
                     BtnX.Size = UDim2.new(0, 64, 0, 44)
                     BtnX.BackgroundColor3 = Color3.fromRGB(192, 57, 43)
-                    BtnX.Text = "X\n[ Xóa Hết ]"
+                    BtnX.Text = "X\\n[ Xóa Hết ]"
                     BtnX.TextColor3 = Color3.fromRGB(255, 255, 255)
                     BtnX.TextSize = 11
                     BtnX.Font = Enum.Font.SourceSansBold
@@ -743,9 +729,7 @@ export default function handler(req, res) {
                     else stopCageSystem() end
                 end)
 
-                -- =========================================================
-                -- 4. TẠO NÚT BẤM NỔI (FLOATING BUTTON) CHO MENU CHÍNH
-                -- =========================================================
+                -- 4. NÚT BẤM NỔI (FLOATING BUTTON) CHO MENU CHÍNH
                 if cg:FindFirstChild("ToggleExploitGui") then
                     cg.ToggleExploitGui:Destroy()
                 end
